@@ -6,6 +6,7 @@ import palmerpenguins
 import seaborn as sns
 import pandas as pd
 
+
 penguins_df = palmerpenguins.load_penguins()
 
 ui.page_opts(title="Julia's Penguin Data", fillable=True)
@@ -51,7 +52,7 @@ with ui.navset_card_tab(id="tab"):
         @render_plotly
         def plotly_histogram():
             return px.histogram(
-                penguins_df,
+                filtered_data(),
                 x=input.selected_attribute(),
                 color="species",
                 nbins=input.plotly_bin_count(),
@@ -63,7 +64,7 @@ with ui.navset_card_tab(id="tab"):
         @render.plot(alt="Seaborn Histogram")
         def seaborn_histogram():
             histplot = sns.histplot(
-                data=penguins_df, x="body_mass_g", bins=input.seaborn_bin_count()
+                data=filtered_data(), x="body_mass_g", bins=input.seaborn_bin_count()
             )
             histplot.set_title("Palmer Penguins")
             histplot.set_xlabel("Mass")
@@ -74,7 +75,7 @@ with ui.navset_card_tab(id="tab"):
         @render_plotly
         def plotly_scatterplot():
             return px.scatter(
-                penguins_df,
+                filtered_data(),
                 x="bill_length_mm",
                 y="body_mass_g",
                 color="species",
@@ -92,25 +93,12 @@ with ui.navset_card_tab(id="tab"):
         @render_plotly
         def plotly_box_plot():
             return px.box(
-                penguins_df,
+                filtered_data(),
                 x="species",
                 y=input.selected_attribute(),
                 color="species",
                 title="Penguins Box Plot",
             )
-
-    with ui.nav_menu("Other Links"):
-        with ui.nav_panel("Pie Chart"):
-            species_distribution = penguins_df["species"].value_counts().reset_index()
-            species_distribution.columns = ["species", "count"]
-            @render_plotly
-            def pie_chart():
-                return px.pie(
-                    species_distribution,
-                    values="count",
-                    names="species",
-                    title="Species Distribution",
-                )
 
 
 # --------------------------------------------------------
