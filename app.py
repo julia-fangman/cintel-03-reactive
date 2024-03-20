@@ -6,6 +6,12 @@ import palmerpenguins
 import seaborn as sns
 import pandas as pd
 
+# Define color mapping for species
+species_colors = {
+    "Adelie": "blue",
+    "Gentoo": "green",
+    "Chinstrap": "red"
+}
 
 penguins_df = palmerpenguins.load_penguins()
 
@@ -30,6 +36,16 @@ with ui.sidebar(position="right", open="open"):
         selected=["Chinstrap"],
         inline=False,
     )
+    
+    # Add checkbox for each island
+    ui.input_checkbox_group(
+        "selected_island_list",
+        "Island",
+        penguins_df['island'].unique().tolist(),
+        selected=penguins_df['island'].unique().tolist(),
+        inline=False,
+    )
+    
     ui.hr()
     
     ui.a("Github", href="https://github.com/julia-fangman/cintel-02-data", target="_blank")
@@ -39,77 +55,151 @@ with ui.accordion(id="acc", open="closed"):
     with ui.accordion_panel("Data Table"):
         @render.data_frame
         def penguin_datatable():
-            return penguins_df
+            selected_species = input.selected_species_list()
+            selected_islands = input.selected_island_list()
+            if not selected_species and not selected_islands:  
+                return penguins_df
+            else:
+                df = penguins_df
+                if selected_species:
+                    df = df[df['species'].isin(selected_species)]
+                if selected_islands:
+                    df = df[df['island'].isin(selected_islands)]
+                return df
 
     with ui.accordion_panel("Data Grid"):
         @render.data_frame
         def penguin_datagrid():
-            return penguins_df
+            selected_species = input.selected_species_list()
+            selected_islands = input.selected_island_list()
+            if not selected_species and not selected_islands:  
+                return penguins_df
+            else:
+                df = penguins_df
+                if selected_species:
+                    df = df[df['species'].isin(selected_species)]
+                if selected_islands:
+                    df = df[df['island'].isin(selected_islands)]
+                return df
 
 # Created a card with tabs for graphs
+# Created a Plotly Histogram showing all species and islands
 with ui.navset_card_tab(id="tab"):
     with ui.nav_panel("Plotly Histogram"):
         @render_plotly
         def plotly_histogram():
+            selected_species = input.selected_species_list()
+            selected_islands = input.selected_island_list()
+            df = penguins_df
+            if selected_species:
+                df = df[df['species'].isin(selected_species)]
+            if selected_islands:
+                df = df[df['island'].isin(selected_islands)]
             return px.histogram(
-                filtered_data(),
+                df,
                 x=input.selected_attribute(),
                 color="species",
+                color_discrete_map=species_colors,  
                 nbins=input.plotly_bin_count(),
                 width=800,
                 height=400,
+                category_orders={input.selected_attribute(): ['bill_length_mm', 'bill_depth_mm', 'flipper_length_mm', 'body_mass_g']},  # Specify category order for x-axis
+                labels={
+                    input.selected_attribute(): "Bill Length",  # Updated x-axis label
+                    "species": "Species",
+                },
+                title="Plotly Histogram"
             )
 
+    
+# Created a Seaborn Histogram showing all species and islands
     with ui.nav_panel("Seaborn Histogram"):
         @render.plot(alt="Seaborn Histogram")
         def seaborn_histogram():
+            selected_species = input.selected_species_list()
+            selected_islands = input.selected_island_list()
+            df = penguins_df
+            if selected_species:
+                df = df[df['species'].isin(selected_species)]
+            if selected_islands:
+                df = df[df['island'].isin(selected_islands)]
             histplot = sns.histplot(
-                data=filtered_data(), x="body_mass_g", bins=input.seaborn_bin_count()
+                data=df, x="body_mass_g", bins=input.seaborn_bin_count(),
+                hue="species", palette=species_colors  
             )
-            histplot.set_title("Palmer Penguins")
+            histplot.set_title("Seaborn Histogram")
             histplot.set_xlabel("Mass")
             histplot.set_ylabel("Count")
             return histplot
 
+    
+# Created a Plotly Scatterplot showing all species and islands
     with ui.nav_panel("Plotly Scatterplot"):
         @render_plotly
         def plotly_scatterplot():
+            selected_species = input.selected_species_list()
+            selected_islands = input.selected_island_list()
+            df = penguins_df
+            if selected_species:
+                df = df[df['species'].isin(selected_species)]
+            if selected_islands:
+                df = df[df['island'].isin(selected_islands)]
             return px.scatter(
-                filtered_data(),
+                df,
                 x="bill_length_mm",
                 y="body_mass_g",
                 color="species",
-                title="Penguins Plot",
+                color_discrete_map=species_colors,  
+                title="Penguins Scatterplot",
                 labels={
                     "bill_length_mm": "Bill Length (mm)",
                     "body_mass_g": "Body Mass (g)",
                 },
-                size_max=5,
                 width=1200,
                 height=600,
             )
 
+    
+# Created a Plotly Boxplot showing all species and islands
     with ui.nav_panel("Plotly Box Plot"):
         @render_plotly
         def plotly_box_plot():
+            selected_species = input.selected_species_list()
+            selected_islands = input.selected_island_list()
+            df = penguins_df
+            if selected_species:
+                df = df[df['species'].isin(selected_species)]
+            if selected_islands:
+                df = df[df['island'].isin(selected_islands)]
             return px.box(
-                filtered_data(),
+                df,
                 x="species",
                 y=input.selected_attribute(),
                 color="species",
+                color_discrete_map=species_colors,  
                 title="Penguins Box Plot",
+                labels={
+                    input.selected_attribute(): input.selected_attribute().replace("_", " ").title(),
+                    "species": "Species",
+                },
             )
-
 
 # --------------------------------------------------------
 # Reactive calculations and effects
 # --------------------------------------------------------
 
 # Add a reactive calculation to filter the data
-# By decorating the function with @reactive, we can use the function to filter the data
-# The function will be called whenever an input functions used to generate that output changes.
-# Any output that depends on the reactive function (e.g., filtered_data()) will be updated when the data changes.
-
 @reactive.calc
 def filtered_data():
-    return penguins_df
+    selected_species = input.selected_species_list()
+    selected_islands = input.selected_island_list()
+    if not selected_species and not selected_islands:  
+        return penguins_df
+    else:
+        df = penguins_df
+        if selected_species:
+            df = df[df['species'].isin(selected_species)]
+        if selected_islands:
+            df = df[df['island'].isin(selected_islands)]
+        return df
+
