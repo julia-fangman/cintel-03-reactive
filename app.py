@@ -28,7 +28,8 @@ with ui.sidebar(position="right", open="open"):
     ui.input_numeric("plotly_bin_count", "Number of Plotly bins", 15)
     
     ui.input_slider("seaborn_bin_count", "Number of Seaborn bins", 1, 40, 20)
-    
+
+    #Added a checkbox for each species
     ui.input_checkbox_group(
         "selected_species_list",
         "Species",
@@ -37,7 +38,7 @@ with ui.sidebar(position="right", open="open"):
         inline=False,
     )
     
-    # Add checkbox for each island
+    # Added a checkbox for each island
     ui.input_checkbox_group(
         "selected_island_list",
         "Island",
@@ -57,7 +58,7 @@ with ui.accordion(id="acc", open="closed"):
         def penguin_datatable():
             selected_species = input.selected_species_list()
             selected_islands = input.selected_island_list()
-            if not selected_species and not selected_islands:  
+            if not selected_species and not selected_islands:  # If no species or islands are selected, return the original data
                 return penguins_df
             else:
                 df = penguins_df
@@ -72,7 +73,7 @@ with ui.accordion(id="acc", open="closed"):
         def penguin_datagrid():
             selected_species = input.selected_species_list()
             selected_islands = input.selected_island_list()
-            if not selected_species and not selected_islands:  
+            if not selected_species and not selected_islands:  # If no species or islands are selected, return the original data
                 return penguins_df
             else:
                 df = penguins_df
